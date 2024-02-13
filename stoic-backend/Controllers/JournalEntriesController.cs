@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using stoic_backend.Data;
 using stoic_backend.Models;
 
@@ -46,6 +47,104 @@ namespace stoic_backend.Controllers
             await _context.SaveChangesAsync();
 
             return Ok(); 
+        }
+
+        [HttpGet]
+        [Route("{id}")]
+        public async Task<IActionResult> GetJournalEntry(int id)
+        {
+            var userId = _userManager.GetUserId(User);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized();
+            }
+
+            var journalEntry = await _context.JournalEntries
+                .AsNoTracking() // Using AsNoTracking for read-only operations for better performance
+                .FirstOrDefaultAsync(je => je.Id == id && je.UserId == userId);
+
+            if (journalEntry == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(journalEntry);
+        }
+
+        [HttpGet]
+        [Route("GetAll")]
+        public async Task<IActionResult> GetAllJournalEntries(int maxAmount = 10, int skipCount = 0)
+        {
+            var userId = _userManager.GetUserId(User);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized();
+            }
+
+            var journalEntries = await _context.JournalEntries
+                .Where(je => je.UserId == userId)
+                .OrderBy(je => je.EntryDate)
+                .Skip(skipCount)
+                .Take(maxAmount)
+                .AsNoTracking()
+                .ToListAsync();
+
+            return Ok(journalEntries);
+        }
+
+        [HttpPut]
+        [Route("journalentries/{id}")]
+        public async Task<IActionResult> UpdateJournalEntry(int id, [FromBody] UpdateJournalEntryDto model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var userId = _userManager.GetUserId(User);
+            var journalEntry = await _context.JournalEntries.FirstOrDefaultAsync(je => je.Id == id && je.UserId == userId);
+
+            if (journalEntry == null)
+            {
+                return NotFound();
+            }
+
+            // Update the properties
+            journalEntry.Answer1 = model.Answer1;
+            journalEntry.Answer2 = model.Answer2;
+            journalEntry.Answer3 = model.Answer3;
+            journalEntry.Answer4 = model.Answer4;
+            journalEntry.Notes = model.Notes;
+            journalEntry.EntryDate = DateTime.Now;
+
+            _context.JournalEntries.Update(journalEntry);
+            await _context.SaveChangesAsync();
+
+            return Ok(journalEntry);
+        }
+
+        [HttpDelete]
+        [Route("{id}")]
+        public async Task<IActionResult> DeleteJournalEntry(int id)
+        {
+            var userId = _userManager.GetUserId(User);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized();
+            }
+
+            var journalEntry = await _context.JournalEntries
+                .FirstOrDefaultAsync(je => je.Id == id && je.UserId == userId);
+
+            if (journalEntry == null)
+            {
+                return NotFound();
+            }
+
+            _context.JournalEntries.Remove(journalEntry);
+            await _context.SaveChangesAsync();
+
+            return Ok();
         }
     }
 }
