@@ -20,15 +20,32 @@ namespace stoic_backend.Controllers
             _context = context;
         }
 
-        [HttpPost(Name = "Create Journal Entry")]
-        public async Task<IActionResult> Create(JournalEntry journalEntry)
+        [HttpPost]
+        [Route("create")]
+        public async Task<IActionResult> CreateJournalEntry([FromBody] CreateJournalEntryDto model)
         {
-            // Set the UserId to the current user's ID
-            journalEntry.UserId = _userManager.GetUserId(User);
+            var userId = _userManager.GetUserId(User); // Get UserId from the currently authenticated user
 
-            _context.Add(journalEntry);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized(); 
+            }
+
+            var journalEntry = new JournalEntry
+            {
+                Answer1 = model.Answer1,
+                Answer2 = model.Answer2,
+                Answer3 = model.Answer3,
+                Answer4 = model.Answer4,
+                Notes = model.Notes,
+                EntryDate = DateTime.Now,
+                UserId = userId
+            };
+
+            _context.JournalEntries.Add(journalEntry);
             await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+
+            return Ok(); 
         }
     }
 }
