@@ -1,6 +1,0 @@
-@StoicBackend_HostAddress = http://localhost:5259
-
-GET {{StoicBackend_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###
