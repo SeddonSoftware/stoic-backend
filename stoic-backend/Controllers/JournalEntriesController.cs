@@ -46,7 +46,7 @@ namespace stoic_backend.Controllers
             _context.JournalEntries.Add(journalEntry);
             await _context.SaveChangesAsync();
 
-            return Ok(); 
+            return Ok(journalEntry); 
         }
 
         [HttpGet]
@@ -66,6 +66,30 @@ namespace stoic_backend.Controllers
             if (journalEntry == null)
             {
                 return NotFound();
+            }
+
+            return Ok(journalEntry);
+        }
+
+        [HttpGet]
+        [Route("today")]
+        public async Task<IActionResult> GetTodaysJournalEntry()
+        {
+            var userId = _userManager.GetUserId(User);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized();
+            }
+
+            var today = DateTime.Today;
+
+            var journalEntry = await _context.JournalEntries
+                .AsNoTracking()
+                .FirstOrDefaultAsync(je => je.UserId == userId && je.EntryDate >= today && je.EntryDate < today.AddDays(1));
+
+            if (journalEntry == null)
+            {
+                return NotFound("No journal entry found for today.");
             }
 
             return Ok(journalEntry);
