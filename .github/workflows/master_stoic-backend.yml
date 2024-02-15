@@ -54,4 +54,4 @@ jobs:
           app-name: 'stoic-backend'
           slot-name: 'Production'
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_A7AAF9E6C5924C59A423A6E67F2F2725 }}
-          package: ./publish
+          package: ${{env.DOTNET_ROOT}}/myapp
