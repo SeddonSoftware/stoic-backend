@@ -117,7 +117,7 @@ namespace stoic_backend.Controllers
         }
 
         [HttpPut]
-        [Route("journalentries/{id}")]
+        [Route("{id}")]
         public async Task<IActionResult> UpdateJournalEntry(int id, [FromBody] UpdateJournalEntryDto model)
         {
             if (!ModelState.IsValid)
