@@ -95,9 +95,10 @@ namespace stoic_backend.Controllers
             return Ok(journalEntry);
         }
 
+
         [HttpGet]
         [Route("GetAll")]
-        public async Task<IActionResult> GetAllJournalEntries(int maxAmount = 10, int skipCount = 0)
+        public async Task<IActionResult> GetJournalEntriesByMonthAndYear(int year, int month, int maxAmount = 10, int skipCount = 0)
         {
             var userId = _userManager.GetUserId(User);
             if (string.IsNullOrEmpty(userId))
@@ -105,8 +106,17 @@ namespace stoic_backend.Controllers
                 return Unauthorized();
             }
 
+            // Ensure the month and year are valid
+            if (month < 1 || month > 12 || year < 1)
+            {
+                return BadRequest("Invalid month or year.");
+            }
+
+            var startDate = new DateTime(year, month, 1);
+            var endDate = startDate.AddMonths(1);
+
             var journalEntries = await _context.JournalEntries
-                .Where(je => je.UserId == userId)
+                .Where(je => je.UserId == userId && je.EntryDate >= startDate && je.EntryDate < endDate)
                 .OrderBy(je => je.EntryDate)
                 .Skip(skipCount)
                 .Take(maxAmount)
@@ -115,6 +125,7 @@ namespace stoic_backend.Controllers
 
             return Ok(journalEntries);
         }
+
 
         [HttpPut]
         [Route("{id}")]
